@@ -1,0 +1,671 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/icon?family=Material+Icons+Round');
+
+:root {
+  /* Premium Palette */
+  --primary-color: #6a35ff;
+  --primary-light: #9d75ff;
+  --primary-dark: #5200cc;
+
+  --accent-cyan: #00d4ff;
+  --accent-pink: #ff6bcc;
+
+  --bg-gradient: linear-gradient(135deg, #f8faff 0%, #f0f4ff 100%);
+  --splash-gradient: linear-gradient(180deg, #ffffff 0%, #d8ccff 40%, #8e5eff 100%);
+
+  --text-main: #1a1a2e;
+  --text-secondary: #6e6e80;
+  --text-light: #ffffff;
+
+  --glass-bg: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(255, 255, 255, 0.5);
+  --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+
+  --shadow-soft: 0 10px 40px -10px rgba(106, 53, 255, 0.2);
+  --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.06);
+
+  --radius-xl: 32px;
+  --radius-lg: 24px;
+  --radius-md: 16px;
+  --radius-sm: 12px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: 'Outfit', sans-serif;
+  background-color: #eef2f5;
+  /* Desktop background */
+  margin: 0;
+  /* Ensure centering on large screens */
+  display: flex;
+  justify-content: center;
+  min-height: 100vh;
+  color: var(--text-main);
+}
+
+/* Frameless Application Container */
+.mobile-container {
+  width: 100%;
+  max-width: 600px;
+  /* Constrain width on desktop for mobile-like feel, but fluid */
+  min-height: 100vh;
+  background: var(--bg-gradient);
+  position: relative;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  /* Safe area handling for real mobiles */
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+  box-shadow: 0 0 50px rgba(0, 0, 0, 0.05);
+  /* Subtle separation on desktop */
+}
+
+/* On smaller screens (real mobile), remove shadow and ensure full width */
+@media (max-width: 600px) {
+  .mobile-container {
+    box-shadow: none;
+  }
+}
+
+/* Circular Screen Adaptation */
+@media screen and (min-aspect-ratio: 1/1) and (max-aspect-ratio: 1/1),
+(hover: none) and (pointer: coarse) {
+
+  /* Heuristic for potential circular displays or just general safe spacing */
+  .mobile-container {
+    /* Ensure corners aren't critical */
+  }
+}
+
+/* Utility: Glassmorphism */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+}
+
+/* Typography */
+h1,
+h2,
+h3 {
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+p {
+  font-weight: 400;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+/* --- Components --- */
+
+/* Header */
+.app-header {
+  height: 60px;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+  /* Minimal top spacing */
+  z-index: 10;
+}
+
+/* Floating Bottom Nav - Fixed at screen bottom */
+.bottom-nav-container {
+  position: fixed;
+  bottom: 30px;
+  left: 20px;
+  right: 20px;
+  max-width: 560px;
+  /* Match container max-width minus margins */
+  margin: 0 auto;
+  /* Center it */
+  height: 70px;
+  border-radius: var(--radius-xl);
+  background: #ffffff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 10px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+  z-index: 50;
+  /* Safe area for bottom swipe bar */
+  margin-bottom: env(safe-area-inset-bottom);
+}
+
+/* NEW: Premium Glassmorphism Floating Navigation (matches React homepage) */
+.floating-nav-glass-container {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-width: 600px;
+  margin: 0 auto;
+  z-index: 50;
+  pointer-events: none;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Glass gradient fade effect */
+.floating-nav-glass-container::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 160px;
+  background: linear-gradient(to top, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.4) 50%, transparent);
+  pointer-events: none;
+}
+
+.floating-nav-glass {
+  position: relative;
+  margin: 0 auto 20px;
+  width: 90%;
+  max-width: 400px;
+  background: rgba(255, 255, 255, 0.30);
+  backdrop-filter: blur(64px);
+  -webkit-backdrop-filter: blur(64px);
+  border: 1px solid rgba(255, 255, 255, 0.40);
+  border-radius: 28px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(99, 102, 241, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 8px 8px;
+  pointer-events: auto;
+  animation: slideUpNav 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes slideUpNav {
+  from {
+    opacity: 0;
+    transform: translateY(100px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.floating-nav-glass .nav-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 16px;
+  border-radius: 16px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.floating-nav-glass .nav-item:hover {
+  transform: scale(1.05);
+}
+
+.floating-nav-glass .nav-item:active {
+  transform: scale(0.95);
+}
+
+.floating-nav-glass .nav-item i {
+  font-size: 20px;
+  color: #6b7280;
+  transition: all 0.3s ease;
+}
+
+.floating-nav-glass .nav-item .nav-label {
+  font-size: 10px;
+  font-weight: 500;
+  color: #6b7280;
+  transition: all 0.3s ease;
+}
+
+/* Active state with gradient background */
+.floating-nav-glass .nav-item.active {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.25), rgba(168, 85, 247, 0.25));
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.30);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.floating-nav-glass .nav-item.active i {
+  color: #4f46e5;
+  transform: translateY(-2px);
+}
+
+.floating-nav-glass .nav-item.active .nav-label {
+  color: #4f46e5;
+}
+
+/* Main action button (center) */
+.floating-nav-glass .nav-item.main-action {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  padding: 12px 16px;
+  border-radius: 20px;
+  box-shadow: 0 10px 20px rgba(99, 102, 241, 0.4);
+}
+
+.floating-nav-glass .nav-item.main-action i {
+  color: white;
+  font-size: 26px;
+}
+
+.floating-nav-glass .nav-item.main-action:hover {
+  box-shadow: 0 15px 25px rgba(99, 102, 241, 0.5);
+}
+
+.floating-nav-glass .nav-item.main-action:active {
+  transform: scale(0.95);
+}
+
+.bottom-nav-item {
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ccc;
+  border-radius: 50%;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.bottom-nav-item.active {
+  color: var(--primary-color);
+  background: rgba(106, 53, 255, 0.05);
+}
+
+.bottom-nav-item.main-action {
+  width: 60px;
+  height: 60px;
+  background: var(--primary-color);
+  color: white;
+  box-shadow: 0 10px 20px rgba(106, 53, 255, 0.4);
+  transform: translateY(-20px);
+}
+
+.bottom-nav-item.main-action:active {
+  transform: translateY(-20px) scale(0.9);
+}
+
+/* Splash Screen */
+/* Splash Screen - Clean Revert */
+.splash-bg {
+  background: var(--splash-gradient);
+  /* Reverting to original */
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 20px;
+  position: relative;
+}
+
+/* Splash Particle */
+.particle {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: particle-rise 10s infinite linear;
+}
+
+/* Camera Overlay Box */
+.camera-focus-box {
+  border: 3px solid var(--primary-light);
+  border-radius: var(--radius-lg);
+  width: 60%;
+  /* Responsive width */
+  max-width: 280px;
+  aspect-ratio: 1/1;
+  position: relative;
+  box-shadow: 0 0 0 100vmax rgba(255, 255, 255, 0.6);
+  /* Massive cutout for any screen size */
+}
+
+/* Chat Bubbles */
+.chat-bubble {
+  background: white;
+  padding: 16px 20px;
+  border-radius: 20px;
+  border-bottom-left-radius: 4px;
+  box-shadow: var(--shadow-card);
+  max-width: 80%;
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.chat-bubble.ai {
+  background: linear-gradient(135deg, #6a35ff 0%, #8f5eff 100%);
+  color: white;
+  border-radius: 20px;
+  border-bottom-right-radius: 4px;
+  border-bottom-left-radius: 20px;
+  margin-left: auto;
+}
+
+/* Audio Player Pill */
+.audio-pill {
+  background: var(--primary-color);
+  color: white;
+  border-radius: 100px;
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 90%;
+  max-width: 320px;
+  box-shadow: 0 15px 30px rgba(106, 53, 255, 0.3);
+}
+
+/* Camera Feed - Light Theme Placeholder */
+.camera-feed-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  /* Clean light gradient background */
+  background: linear-gradient(135deg, #f8f9ff 0%, #e8ecff 50%, #f0f4ff 100%);
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Placeholder content when camera is not active */
+.camera-feed-bg::before {
+  content: 'videocam';
+  font-family: 'Material Icons Round';
+  font-size: 80px;
+  color: rgba(106, 53, 255, 0.15);
+  margin-bottom: 20px;
+}
+
+.camera-feed-bg::after {
+  content: 'Tap the camera button to start';
+  font-family: 'Outfit', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(106, 53, 255, 0.4);
+  text-align: center;
+}
+
+/* Text Synchronization Highlight */
+.word-span {
+  display: inline-block;
+  transition: all 0.2s ease;
+  padding: 0 2px;
+  border-radius: 4px;
+}
+
+.word-span.active {
+  background-color: rgba(106, 53, 255, 0.15);
+  color: var(--primary-color);
+  transform: scale(1.1);
+  font-weight: 700;
+}
+
+/* Animations */
+@keyframes gradient-flow {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes float-y {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+@keyframes particle-rise {
+  0% {
+    transform: translateY(100vh) scale(0);
+    opacity: 0;
+  }
+
+  20% {
+    opacity: 0.8;
+  }
+
+  100% {
+    transform: translateY(-20vh) scale(1);
+    opacity: 0;
+  }
+}
+
+/* Animations */
+@keyframes pulse-soft {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(106, 53, 255, 0.4);
+  }
+
+  70% {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 10px rgba(106, 53, 255, 0);
+  }
+
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(106, 53, 255, 0);
+  }
+}
+
+@keyframes wave {
+
+  0%,
+  100% {
+    height: 20px;
+  }
+
+  50% {
+    height: 40px;
+  }
+}
+
+.waveform-bar {
+  width: 5px;
+  background: white;
+  border-radius: 10px;
+  animation: wave 1s ease-in-out infinite;
+}
+
+.fade-in-up {
+  animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+@keyframes fadeInUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Helper for Floating Nav centering on larger screens */
+@media (min-width: 601px) {
+
+  .bottom-nav-container,
+  .floating-input,
+  .chat-bottom-nav {
+    /* Keep them relative to the main container logic if fixed is tricky, 
+            but using fixed + max-width + margin:0 auto works for the 'centered app' look. */
+    left: 50%;
+    transform: translateX(-50%);
+    /* For bottom-nav-item.main-action active state, we need to be careful with transforms */
+  }
+
+  .bottom-nav-item.main-action {
+    /* Reset transform origin or behavior if needed, standard fixed positioning handles centering */
+  }
+
+  .chat-bottom-nav {
+    /* Already centered */
+  }
+}
+
+/* --- Global Glass Loading Overlay --- */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(255, 255, 255, 0.1);
+  /* Ultra transparent */
+  backdrop-filter: blur(8px);
+  /* Frosted glass effect */
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  /* Interact through until active? No, block while loading */
+}
+
+.loading-overlay.active {
+  opacity: 1;
+  pointer-events: all;
+}
+
+/* Minimal Container */
+.loader-content {
+  /* No background, floating elements */
+  width: 200px;
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+/* --- Type 1: Sign-to-Text (Vision/Scanning) --- */
+/* Abstract rotating bracket/lens */
+.loader-vision-ring {
+  position: absolute;
+  width: 80px;
+  height: 80px;
+  border: 4px solid rgba(106, 53, 255, 0.3);
+  border-top-color: var(--primary-color);
+  border-radius: 50%;
+  animation: spin-vision 1s linear infinite;
+}
+
+.loader-vision-ring::before {
+  content: '';
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  right: 5px;
+  bottom: 5px;
+  border: 4px solid transparent;
+  border-top-color: var(--accent-cyan);
+  border-radius: 50%;
+  animation: spin-vision 2s linear infinite reverse;
+}
+
+.loader-vision-scanline {
+  width: 100px;
+  height: 2px;
+  background: var(--primary-color);
+  box-shadow: 0 0 10px var(--primary-color);
+  animation: scan-vertical 1.5s ease-in-out infinite;
+}
+
+@keyframes spin-vision {
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes scan-vertical {
+
+  0%,
+  100% {
+    transform: translateY(-40px);
+    opacity: 0;
+  }
+
+  50% {
+    transform: translateY(40px);
+    opacity: 1;
+  }
+}
+
+/* --- Type 2: Text-to-Sign (Avatar/Processing) --- */
+/* Morphing Abstract Shape */
+.loader-avatar-orb {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #6a35ff, #ff6bcc);
+  border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+  animation: morph-orb 3s ease-in-out infinite;
+  filter: blur(0.5px);
+  box-shadow: 0 10px 40px rgba(106, 53, 255, 0.4);
+  opacity: 0.9;
+}
+
+@keyframes morph-orb {
+  0% {
+    border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+    transform: rotate(0deg);
+  }
+
+  50% {
+    border-radius: 80% 20% 30% 70% / 60% 40% 60% 40%;
+    transform: rotate(180deg);
+  }
+
+  100% {
+    border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+    transform: rotate(360deg);
+  }
+}
+
+/* Hide text as requested ("What is this bar?") */
+#loading-text {
+  display: none;
+}
+
+.loading-bar {
+  display: none;
+}

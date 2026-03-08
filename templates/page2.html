@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Smart Language Translator - Camera</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* Webcam Controls - Floating Vertical Pills on Right Side */
+        .webcam-controls {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 30;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .webcam-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            width: 56px;
+            height: 56px;
+            border: none;
+            border-radius: 18px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 9px;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .webcam-btn i {
+            font-size: 22px;
+        }
+
+        .webcam-btn .btn-label {
+            display: none;
+        }
+
+        .webcam-btn.start {
+            background: rgba(255, 255, 255, 0.25);
+            color: white;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+        }
+
+        .webcam-btn.start:hover {
+            transform: scale(1.1) translateX(-4px);
+            background: linear-gradient(135deg, rgba(0, 224, 133, 0.95), rgba(0, 200, 120, 0.95));
+            box-shadow: 0 15px 50px rgba(0, 224, 133, 0.6);
+        }
+
+        .webcam-btn.start:active {
+            transform: scale(0.95);
+        }
+
+        .webcam-btn.stop {
+            background: rgba(255, 255, 255, 0.25);
+            color: white;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+        }
+
+        .webcam-btn.stop:hover {
+            transform: scale(1.1) translateX(-4px);
+            background: linear-gradient(135deg, rgba(255, 107, 107, 0.95), rgba(255, 85, 85, 0.95));
+            box-shadow: 0 15px 50px rgba(255, 107, 107, 0.6);
+        }
+
+        .webcam-btn.stop:active {
+            transform: scale(0.95);
+        }
+
+        .webcam-btn.upload {
+            background: rgba(255, 255, 255, 0.25);
+            color: white;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+        }
+
+        .webcam-btn.upload:hover {
+            transform: scale(1.1) translateX(-4px);
+            background: linear-gradient(135deg, rgba(138, 43, 226, 0.95), rgba(106, 13, 173, 0.95));
+            box-shadow: 0 15px 50px rgba(138, 43, 226, 0.6);
+        }
+
+        .webcam-btn.upload:active {
+            transform: scale(0.95);
+        }
+
+        .webcam-btn:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+            transform: none !important;
+            background: rgba(100, 100, 100, 0.2);
+        }
+
+        /* Active state glow */
+        .webcam-btn.start.active-cam {
+            background: linear-gradient(135deg, rgba(0, 224, 133, 0.9), rgba(0, 200, 120, 0.9));
+            animation: pulse-glow 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-glow {
+
+            0%,
+            100% {
+                box-shadow: 0 8px 32px rgba(0, 224, 133, 0.4);
+            }
+
+            50% {
+                box-shadow: 0 8px 48px rgba(0, 224, 133, 0.6);
+            }
+        }
+
+        /* Live Video Feed Container */
+        .live-video-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            display: none;
+        }
+
+        .live-video-container.active {
+            display: block;
+        }
+
+        #webcam-feed {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: contrast(1.05);
+        }
+
+        /* Status indicator */
+        .webcam-status {
+            position: absolute;
+            top: 140px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 25;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            color: white;
+            font-size: 12px;
+            font-weight: 500;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .webcam-status.visible {
+            opacity: 1;
+        }
+
+        .webcam-status .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #00e085;
+            animation: pulse-dot 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse-dot {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.6;
+                transform: scale(1.2);
+            }
+        }
+
+        /* Copy success feedback */
+        .copy-feedback {
+            position: fixed;
+            bottom: 200px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: rgba(0, 224, 133, 0.95);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            box-shadow: 0 10px 30px rgba(0, 224, 133, 0.4);
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+            z-index: 100;
+        }
+
+        .copy-feedback.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* Fullscreen Mode Styles */
+        body.fullscreen-mode .app-header,
+        body.fullscreen-mode .camera-focus-box {
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+        }
+
+        /* Keep navigation bar always visible */
+        .floating-nav-glass-container {
+            opacity: 1 !important;
+            pointer-events: auto !important;
+        }
+
+        /* Ensure controls remain visible and high contrast */
+        .webcam-controls {
+            z-index: 999;
+            /* Max visibility */
+        }
+
+        .webcam-btn {
+            background: rgba(0, 0, 0, 0.4);
+            /* Darker for better contrast */
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="mobile-container">
+
+        <!-- Fullscreen Camera Feed Placeholder (Static Background) -->
+        <div class="camera-feed-bg"></div>
+
+        <!-- Live Webcam Video Container -->
+        <div class="live-video-container" id="live-video-container">
+            <video id="webcam-feed" autoplay playsinline muted></video>
+        </div>
+
+        <!-- Overlay HUD -->
+        <div
+            style="position:relative; z-index:10; width:100%; height:100%; display:flex; flex-direction:column; align-items:center;">
+
+            <!-- Camera Header -->
+            <div class="app-header" style="width:100%; padding-top:20px;">
+                <i class="material-icons-round"
+                    style="color:white; font-size:28px; background:rgba(0,0,0,0.2); padding:8px; border-radius:50%; cursor:pointer;">grid_view</i>
+                <div
+                    style="display:flex; align-items:center; gap:5px; background:rgba(255,255,255,0.2); backdrop-filter:blur(5px); padding:6px 16px; border-radius:20px; color:white; font-weight:600; font-size:14px; cursor:pointer;">
+                    Smart AI <i class="material-icons-round" style="font-size:16px;">expand_more</i>
+                </div>
+            </div>
+
+
+
+            <!-- Webcam Status Indicator -->
+            <div class="webcam-status" id="webcam-status">
+                <span class="status-dot"></span>
+                <span id="status-text">Live Feed Active</span>
+            </div>
+
+            <!-- Focus Box Removed as requested -->
+            <div style="flex:1; width:100%;"></div>
+
+            <!-- Translation Pop-up -->
+            <div class="fade-in-up" style="
+                 margin-bottom: 120px; /* Space for Bottom Nav */
+                 width: 90%;
+                 max-width: 400px;
+                 background: rgba(255, 255, 255, 0.95);
+                 backdrop-filter: blur(20px);
+                 padding: 20px;
+                 border-radius: 20px;
+                 display: flex; justify-content: space-between; align-items: center;
+                 box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+             ">
+                <p id="translation-text" style="color:#1a1a2e; font-weight:600; font-size:15px; margin-right:10px;">
+                    Hi, my name is Faizan. Nice to meet you.
+                </p>
+                <i id="copy-btn" class="material-icons-round"
+                    style="color:var(--primary-color); cursor:pointer; transition: transform 0.2s ease;">content_copy</i>
+            </div>
+        </div>
+
+        <!-- Copy Feedback Toast -->
+        <div class="copy-feedback" id="copy-feedback">
+            <i class="material-icons-round"
+                style="font-size: 16px; vertical-align: middle; margin-right: 6px;">check_circle</i>
+            Copied to clipboard!
+        </div>
+
+        <!-- Premium Glassmorphism Floating Navigation -->
+        <div class="floating-nav-glass-container">
+            <div class="floating-nav-glass">
+                <a href="home.html" class="nav-item">
+                    <i class="material-icons-round">home</i>
+                    <span class="nav-label">Home</span>
+                </a>
+                <a href="page4.html" class="nav-item">
+                    <i class="material-icons-round">auto_awesome</i>
+                    <span class="nav-label">Chatbot</span>
+                </a>
+                <a href="javascript:void(0)" class="nav-item main-action" id="tts-btn">
+                    <i class="material-icons-round">volume_up</i>
+                </a>
+                <a href="page3.html" class="nav-item">
+                    <i class="material-icons-round">sign_language</i>
+                    <span class="nav-label">Text to Sign</span>
+                </a>
+                <a href="home.html#profile" class="nav-item">
+                    <i class="material-icons-round">person_outline</i>
+                    <span class="nav-label">Profile</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Webcam Control Buttons - Fixed Right Side -->
+        <div class="webcam-controls">
+            <button class="webcam-btn start" id="start-webcam-btn" title="Start Webcam">
+                <i class="material-icons-round">videocam</i>
+            </button>
+            <button class="webcam-btn stop" id="stop-webcam-btn" title="Close Webcam" disabled>
+                <i class="material-icons-round">videocam_off</i>
+            </button>
+            <button class="webcam-btn upload" id="upload-video-btn" title="Upload Video">
+                <i class="material-icons-round">upload_file</i>
+            </button>
+        </div>
+
+        <!-- Hidden File Input for Video Upload -->
+        <input type="file" id="video-file-input" accept="video/*" style="display: none;">
+
+    </div>
+
+    <script src="js/app.js"></script>
+    <script>
+        // ========================================
+        // WEBCAM CONTROLLER - Backend Ready
+        // ========================================
+
+        (function () {
+            'use strict';
+
+            // DOM Elements
+            const startBtn = document.getElementById('start-webcam-btn');
+            const stopBtn = document.getElementById('stop-webcam-btn');
+            const videoContainer = document.getElementById('live-video-container');
+            const videoElement = document.getElementById('webcam-feed');
+            const statusIndicator = document.getElementById('webcam-status');
+            const statusText = document.getElementById('status-text');
+            const copyBtn = document.getElementById('copy-btn');
+            const translationText = document.getElementById('translation-text');
+            const copyFeedback = document.getElementById('copy-feedback');
+
+            // Webcam State
+            let mediaStream = null;
+            let isStreaming = false;
+            let frameInterval = null;
+
+            // Backend Configuration - Sign-to-Text API
+            const BACKEND_CONFIG = {
+                // HTTP endpoint for frame analysis
+                httpEndpoint: 'http://localhost:5000/api/sign-to-text/analyze-webcam',
+                // Video upload endpoint
+                videoUploadEndpoint: 'http://localhost:5000/api/sign-to-text/analyze-video',
+                // Frame capture interval (collect 32 frames before sending)
+                frameIntervalMs: 100, // ~10 FPS
+                framesPerBatch: 32,   // I3D model requires 32 frames
+                // Enable backend streaming
+                enableBackendStreaming: true  // NOW ENABLED!
+            };
+
+            let websocket = null;
+
+            // ========================================
+            // WEBCAM FUNCTIONS
+            // ========================================
+
+            async function startWebcam() {
+                try {
+                    // 1. Enumerate all devices to find the PC webcam
+                    const devices = await navigator.mediaDevices.enumerateDevices();
+                    const videoDevices = devices.filter(device => device.kind === 'videoinput');
+
+                    console.log('[Webcam] Available devices:', videoDevices);
+
+                    // 2. Enhanced PC camera selection logic
+                    // Prefer: 'integrated', 'built-in', 'hd', 'usb', 'facetime'
+                    // Avoid: 'iphone', 'continuity', 'mobile', 'back'
+                    let selectedDeviceId = null;
+
+                    // Priority 1: Built-in PC webcam
+                    const pcCamera = videoDevices.find(device => {
+                        const label = device.label.toLowerCase();
+                        return (
+                            (label.includes('integrated') ||
+                                label.includes('built-in') ||
+                                label.includes('hd webcam') ||
+                                label.includes('facetime') ||
+                                label.includes('usb')) &&
+                            !label.includes('iphone') &&
+                            !label.includes('continuity') &&
+                            !label.includes('back')
+                        );
+                    });
+
+                    // Priority 2: Any camera that's NOT mobile/iPhone
+                    const nonMobileCamera = videoDevices.find(device => {
+                        const label = device.label.toLowerCase();
+                        return !label.includes('iphone') &&
+                            !label.includes('continuity') &&
+                            !label.includes('mobile');
+                    });
+
+                    if (pcCamera) {
+                        selectedDeviceId = pcCamera.deviceId;
+                        console.log('[Webcam] ✅ Selected PC Camera:', pcCamera.label);
+                    } else if (nonMobileCamera) {
+                        selectedDeviceId = nonMobileCamera.deviceId;
+                        console.log('[Webcam] ✅ Selected Non-Mobile Camera:', nonMobileCamera.label);
+                    } else if (videoDevices.length > 0) {
+                        // Last resort: use first available
+                        selectedDeviceId = videoDevices[0].deviceId;
+                        console.log('[Webcam] ⚠️ Using first available:', videoDevices[0].label);
+                    }
+
+                    // 3. Construct Constraints
+                    const constraints = {
+                        video: selectedDeviceId ? { deviceId: { exact: selectedDeviceId } } : true,
+                        audio: false
+                    };
+
+                    if (!selectedDeviceId) {
+                        // Fallback: request HD resolution
+                        constraints.video = { width: { ideal: 1280 }, height: { ideal: 720 } };
+                    }
+
+                    console.log('[Webcam] Requesting with constraints:', constraints);
+
+                    // 4. Request Stream
+                    mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+
+                    // Set video source
+                    videoElement.srcObject = mediaStream;
+
+                    // Wait for video to be ready
+                    await new Promise((resolve) => {
+                        videoElement.onloadedmetadata = () => {
+                            videoElement.play();
+                            resolve();
+                        };
+                    });
+
+                    // Update UI
+                    isStreaming = true;
+                    videoContainer.classList.add('active');
+
+                    // Button States
+                    startBtn.disabled = true;
+                    stopBtn.disabled = false;
+                    showStatus('Live Feed Active');
+
+                    // Enter Fullscreen Mode
+                    document.body.classList.add('fullscreen-mode');
+
+                    // Start backend streaming if enabled
+                    if (BACKEND_CONFIG.enableBackendStreaming) {
+                        startBackendStreaming();
+                    }
+
+                    console.log('[Webcam] Started successfully');
+
+                } catch (error) {
+                    console.error('[Webcam] Error:', error);
+                    handleWebcamError(error);
+                }
+            }
+
+            function stopWebcam() {
+                // Stop all tracks
+                if (mediaStream) {
+                    mediaStream.getTracks().forEach(track => track.stop());
+                    mediaStream = null;
+                }
+
+                // Clear video source
+                videoElement.srcObject = null;
+
+                // Stop backend streaming
+                stopBackendStreaming();
+
+                // Update UI
+                isStreaming = false;
+                videoContainer.classList.remove('active');
+                startBtn.disabled = false;
+                stopBtn.disabled = true;
+                hideStatus();
+
+                // Exit Fullscreen Mode
+                document.body.classList.remove('fullscreen-mode');
+
+                console.log('[Webcam] Stopped');
+            }
+
+            function handleWebcamError(error) {
+                let message = 'An error occurred while accessing the webcam.';
+
+                if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+                    message = 'Camera permission was denied. Please allow camera access and try again.';
+                } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
+                    message = 'No camera found. Please connect a webcam and try again.';
+                } else if (error.name === 'NotReadableError' || error.name === 'TrackStartError') {
+                    message = 'Camera is already in use by another application.';
+                } else if (error.name === 'OverconstrainedError') {
+                    message = 'Camera does not support the requested resolution.';
+                }
+
+                alert(message);
+                stopWebcam();
+            }
+
+            // ========================================
+            // BACKEND STREAMING (WebSocket / HTTP)
+            // ========================================
+
+            // Frame buffer for collecting 32 frames
+            let frameBuffer = [];
+            let isCollectingFrames = false;
+
+            function startBackendStreaming() {
+                // Create canvas for frame capture
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+
+                console.log('[Backend] Starting frame collection...');
+                isCollectingFrames = true;
+                frameBuffer = [];
+
+                // Frame capture interval - collect frames into buffer
+                frameInterval = setInterval(() => {
+                    if (!isStreaming || !videoElement.videoWidth || !isCollectingFrames) return;
+
+                    // Set canvas size to video dimensions
+                    canvas.width = videoElement.videoWidth;
+                    canvas.height = videoElement.videoHeight;
+
+                    // Draw current video frame
+                    ctx.drawImage(videoElement, 0, 0);
+
+                    // Get frame as base64 JPEG
+                    const frameData = canvas.toDataURL('image/jpeg', 0.7);
+
+                    // Add to buffer
+                    frameBuffer.push(frameData);
+
+                    // When we have enough frames, send to backend
+                    if (frameBuffer.length >= BACKEND_CONFIG.framesPerBatch) {
+                        sendFramesToBackend();
+                    }
+
+                }, BACKEND_CONFIG.frameIntervalMs);
+
+                console.log('[Backend] Frame collection started');
+            }
+
+            function stopBackendStreaming() {
+                if (frameInterval) {
+                    clearInterval(frameInterval);
+                    frameInterval = null;
+                }
+
+                if (websocket) {
+                    websocket.close();
+                    websocket = null;
+                }
+
+                console.log('[Backend] Streaming stopped');
+            }
+
+            function connectWebSocket() {
+                websocket = new WebSocket(BACKEND_CONFIG.wsEndpoint);
+
+                websocket.onopen = () => {
+                    console.log('[WebSocket] Connected to backend');
+                    showStatus('Connected to AI');
+                };
+
+                websocket.onmessage = (event) => {
+                    // Handle backend responses (e.g., detected signs)
+                    try {
+                        const data = JSON.parse(event.data);
+                        handleBackendResponse(data);
+                    } catch (e) {
+                        console.log('[WebSocket] Message:', event.data);
+                    }
+                };
+
+                websocket.onerror = (error) => {
+                    console.error('[WebSocket] Error:', error);
+                };
+
+                websocket.onclose = () => {
+                    console.log('[WebSocket] Disconnected');
+                    websocket = null;
+                };
+            }
+
+            async function sendFramesToBackend() {
+                if (frameBuffer.length === 0) return;
+
+                // Temporarily stop collecting while processing
+                isCollectingFrames = false;
+
+                const framesToSend = frameBuffer.splice(0, BACKEND_CONFIG.framesPerBatch);
+
+                console.log(`[Backend] Sending ${framesToSend.length} frames for analysis...`);
+                showStatus('Analyzing signs...');
+
+                try {
+                    const response = await fetch(BACKEND_CONFIG.httpEndpoint, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            frames: framesToSend,
+                            timestamp: Date.now()
+                        })
+                    });
+
+                    const data = await response.json();
+                    handleBackendResponse(data);
+
+                    // Resume collecting frames after a short delay
+                    setTimeout(() => {
+                        isCollectingFrames = true;
+                        frameBuffer = [];  // Clear buffer for fresh prediction
+                    }, 3000);  // 3 second cooldown between predictions
+
+                } catch (error) {
+                    console.error('[Backend] Error:', error);
+                    updateTranslation('Connection error. Is the server running?');
+                    // Resume collecting
+                    isCollectingFrames = true;
+                }
+            }
+
+            function handleBackendResponse(data) {
+                console.log('[Backend] Response:', data);
+
+                if (data.success) {
+                    const topSign = data.top_sign;
+                    const confidence = data.confidence || 0;
+
+                    // Update translation text with prediction
+                    if (topSign && confidence >= 3.0) {
+                        updateTranslation(`${topSign} (${confidence.toFixed(1)}% confidence)`);
+                        showStatus(`Detected: ${topSign}`);
+                    } else if (topSign) {
+                        updateTranslation(`${topSign}? (Low confidence: ${confidence.toFixed(1)}%)`);
+                        showStatus('Low confidence detection');
+                    } else {
+                        showStatus('No clear sign detected');
+                    }
+
+                    // Log all predictions for debugging
+                    if (data.predictions && data.predictions.length > 0) {
+                        console.log('[Sign Detection] Top predictions:');
+                        data.predictions.forEach((p, i) => {
+                            console.log(`  ${i + 1}. ${p.sign}: ${p.confidence.toFixed(1)}%`);
+                        });
+                    }
+                } else {
+                    console.error('[Backend] Error:', data.error);
+                    updateTranslation('Analysis failed. Please try again.');
+                }
+            }
+
+            // ========================================
+            // UI HELPER FUNCTIONS
+            // ========================================
+
+            function showStatus(text) {
+                statusText.textContent = text;
+                statusIndicator.classList.add('visible');
+            }
+
+            function hideStatus() {
+                statusIndicator.classList.remove('visible');
+            }
+
+            function updateDetectionLabel(sign, confidence) {
+                const label = document.getElementById('detection-label');
+                if (label) {
+                    const percent = Math.round(confidence * 100);
+                    label.textContent = `${percent}% ${sign.toUpperCase()}`;
+                }
+            }
+
+            function updateTranslation(text) {
+                if (translationText) {
+                    translationText.textContent = text;
+                }
+            }
+
+            // ========================================
+            // COPY TO CLIPBOARD
+            // ========================================
+
+            function copyToClipboard() {
+                const text = translationText.textContent.trim();
+
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(text).then(() => {
+                        showCopyFeedback();
+                    }).catch(err => {
+                        console.error('Failed to copy:', err);
+                        fallbackCopy(text);
+                    });
+                } else {
+                    fallbackCopy(text);
+                }
+            }
+
+            function fallbackCopy(text) {
+                // Fallback for older browsers
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                textarea.style.position = 'fixed';
+                textarea.style.opacity = '0';
+                document.body.appendChild(textarea);
+                textarea.select();
+
+                try {
+                    document.execCommand('copy');
+                    showCopyFeedback();
+                } catch (err) {
+                    console.error('Fallback copy failed:', err);
+                    alert('Failed to copy. Please copy manually.');
+                }
+
+                document.body.removeChild(textarea);
+            }
+
+            function showCopyFeedback() {
+                // Animate copy button
+                copyBtn.style.transform = 'scale(1.2)';
+                copyBtn.textContent = 'check';
+                copyBtn.style.color = '#00e085';
+
+                // Show toast
+                copyFeedback.classList.add('show');
+
+                // Reset after animation
+                setTimeout(() => {
+                    copyBtn.style.transform = '';
+                    copyBtn.textContent = 'content_copy';
+                    copyBtn.style.color = 'var(--primary-color)';
+                    copyFeedback.classList.remove('show');
+                }, 2000);
+            }
+
+            // ========================================
+            // EVENT LISTENERS
+            // ========================================
+
+            startBtn.addEventListener('click', startWebcam);
+            stopBtn.addEventListener('click', stopWebcam);
+
+            // ========================================
+            // VIDEO UPLOAD FUNCTIONALITY
+            // ========================================
+
+            const uploadBtn = document.getElementById('upload-video-btn');
+            const videoFileInput = document.getElementById('video-file-input');
+
+            uploadBtn.addEventListener('click', () => {
+                // Stop webcam if running
+                if (isStreaming) {
+                    stopWebcam();
+                }
+                videoFileInput.click();
+            });
+
+            videoFileInput.addEventListener('change', (event) => {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                // Validate it's a video file
+                if (!file.type.startsWith('video/')) {
+                    alert('Please select a valid video file.');
+                    return;
+                }
+
+                console.log('[Upload] Video selected:', file.name, 'Size:', (file.size / 1024 / 1024).toFixed(2) + 'MB');
+
+                // Create URL for the video
+                const videoURL = URL.createObjectURL(file);
+
+                // Show video in the container
+                videoElement.srcObject = null; // Clear webcam stream if any
+                videoElement.src = videoURL;
+                videoElement.muted = false; // Allow audio if present
+                videoElement.controls = true; // Show controls for uploaded video
+                videoElement.loop = false;
+
+                videoContainer.classList.add('active');
+                document.body.classList.add('fullscreen-mode');
+
+                // Update button states
+                startBtn.disabled = false;
+                stopBtn.disabled = false;
+
+                // Show status
+                showStatus('Video Loaded: ' + file.name.substring(0, 20) + (file.name.length > 20 ? '...' : ''));
+
+                // Play the video
+                videoElement.play().catch(err => {
+                    console.error('[Upload] Playback error:', err);
+                });
+
+                // Update translation text
+                updateTranslation('Analyzing video... Please wait.');
+
+                // Send video to backend for sign analysis
+                const formData = new FormData();
+                formData.append('video', file);
+
+                console.log('[Upload] Sending to backend for analysis...');
+
+                fetch(BACKEND_CONFIG.videoUploadEndpoint, {
+                    method: 'POST',
+                    body: formData
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('[Upload] Analysis result:', data);
+
+                        if (data.success) {
+                            const translation = data.translation || 'No signs detected';
+                            const signCount = data.detected_signs ? data.detected_signs.length : 0;
+
+                            updateTranslation(translation);
+                            showStatus(`Found ${signCount} sign(s)`);
+
+                            // Log detailed results
+                            if (data.detected_signs && data.detected_signs.length > 0) {
+                                console.log('[Upload] Detected signs:');
+                                data.detected_signs.forEach(s => {
+                                    console.log(`  - ${s.sign} at ${s.timestamp}s (${s.confidence}%)`);
+                                });
+                            }
+                        } else {
+                            updateTranslation('Error: ' + (data.error || 'Analysis failed'));
+                        }
+                    })
+                    .catch(error => {
+                        console.error('[Upload] API error:', error);
+                        updateTranslation('Failed to analyze video. Is the server running?');
+                    });
+
+                // Reset file input for re-selection
+                videoFileInput.value = '';
+            });
+
+            // Modify stop button to also handle uploaded videos
+            const originalStopWebcam = stopWebcam;
+            stopWebcam = function () {
+                // Stop media stream if exists
+                if (mediaStream) {
+                    mediaStream.getTracks().forEach(track => track.stop());
+                    mediaStream = null;
+                }
+
+                // Clear video source (both webcam and uploaded)
+                videoElement.srcObject = null;
+                if (videoElement.src) {
+                    URL.revokeObjectURL(videoElement.src); // Clean up blob URL
+                    videoElement.src = '';
+                }
+                videoElement.controls = false;
+
+                // Stop backend streaming
+                stopBackendStreaming();
+
+                // Update UI
+                isStreaming = false;
+                videoContainer.classList.remove('active');
+                startBtn.disabled = false;
+                stopBtn.disabled = true;
+                hideStatus();
+
+                // Exit Fullscreen Mode
+                document.body.classList.remove('fullscreen-mode');
+
+                console.log('[Webcam/Video] Stopped');
+            };
+            copyBtn.addEventListener('click', copyToClipboard);
+
+            // Cleanup on page unload
+            window.addEventListener('beforeunload', () => {
+                if (isStreaming) {
+                    stopWebcam();
+                }
+            });
+
+            // ========================================
+            // PUBLIC API (for backend integration)
+            // ========================================
+
+            // Expose webcam controller for external access
+            window.WebcamController = {
+                start: startWebcam,
+                stop: stopWebcam,
+                isActive: () => isStreaming,
+                getVideoElement: () => videoElement,
+                getMediaStream: () => mediaStream,
+                updateTranslation: updateTranslation,
+                updateDetection: updateDetectionLabel,
+                // Enable backend streaming programmatically
+                enableBackend: (wsUrl, httpUrl) => {
+                    if (wsUrl) BACKEND_CONFIG.wsEndpoint = wsUrl;
+                    if (httpUrl) BACKEND_CONFIG.httpEndpoint = httpUrl;
+                    BACKEND_CONFIG.enableBackendStreaming = true;
+                    if (isStreaming) startBackendStreaming();
+                }
+            };
+
+            console.log('[Page2] Webcam controller initialized');
+            console.log('[Page2] To enable backend streaming, call: WebcamController.enableBackend("ws://your-backend/ws", "http://your-backend/api/frame")');
+
+        })();
+    </script>
+</body>
+
+</html>

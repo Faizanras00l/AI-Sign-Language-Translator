@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Smart Language Translator - Avatar</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <div class="mobile-container" style="background:#fff;">
+
+        <div class="app-header">
+            <i class="material-icons-round" onclick="history.back()"
+                style="font-size:28px; cursor:pointer;">arrow_back</i>
+        </div>
+
+        <div
+            style="flex:1; padding: 0 24px; display:flex; flex-direction:column; align-items:center; justify-content:center; padding-bottom:100px;">
+            <!-- Video/Media Container -->
+            <!-- UPDATED: Glassmorphism, Larger Height, premium feel -->
+            <div id="video-container" style="
+                width: 100%;
+                max-width: 320px; 
+                height: 480px; 
+                background: rgba(0, 0, 0, 0.03);
+                backdrop-filter: blur(20px);
+                -webkit-backdrop-filter: blur(20px);
+                border: 1px solid rgba(0,0,0,0.05);
+                border-radius: 30px;
+                margin-bottom: 24px;
+                box-shadow: 0 30px 60px -15px rgba(0,0,0,0.15);
+                overflow: hidden;
+                position: relative;
+                transition: all 0.3s ease;
+            ">
+                <!-- Placeholder for future video element -->
+                <div id="video-placeholder"
+                    style="width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#888; opacity:0.7;">
+                    <i class="material-icons-round" style="font-size:64px; margin-bottom:16px; color:#ccc;">videocam</i>
+                    <span style="font-size:14px; font-weight:500;">AI Video Output</span>
+                </div>
+
+                <!-- Actual Video Element (Hidden initially) -->
+                <!-- Added 'muted' to allow autoplay, 'controls' for debugging -->
+                <video id="ai-video" style="width:100%; height:100%; object-fit:cover; display:none;" playsinline muted
+                    controls>
+                    <source src="" type="video/mp4">
+                </video>
+
+                <!-- Speed Controller (Moved Inside Video) -->
+                <div id="video-controls-overlay" style="
+                    position: absolute; bottom: 0; left: 0; right: 0;
+                    padding: 15px;
+                    background: linear-gradient(to top, rgba(0,0,0,0.6), transparent);
+                    display: flex; align-items: center; justify-content: space-between;
+                    opacity: 0.9;
+                ">
+                    <span style="font-size:11px; font-weight:600; color:white;">0.5x</span>
+                    <input type="range" id="speed-slider" min="0.5" max="2.0" step="0.5" value="1.0"
+                        style="flex:1; margin:0 10px; accent-color: white; height: 4px; border-radius: 2px;">
+                    <span id="speed-value" style="font-size:11px; font-weight:600; color:white;">1.0x</span>
+                </div>
+
+                <!-- Loading/Processing Overlay (Hidden by default) -->
+                <div id="processing-overlay" style="
+                    position: absolute; top:0; left:0; right:0; bottom:0;
+                    background: rgba(255,255,255,0.85);
+                    backdrop-filter: blur(5px);
+                    display:none;
+                    flex-direction:column;
+                    align-items:center;
+                    justify-content:center;
+                    z-index: 10;
+                ">
+                    <div class="loader-avatar-orb" style="margin-bottom:20px;"></div>
+                    <span style="font-size:16px; font-weight:600; color:#333;">Processing Request...</span>
+                    <span style="font-size:13px; color:#666; margin-top:5px;">Please wait</span>
+                </div>
+            </div>
+
+            <!-- Editable Text Area with Word Highlighting -->
+            <!-- Input Area with Send Button -->
+            <div style="position: relative; width: 100%; max-width: 400px; margin-bottom: 24px;">
+                <!-- Hidden textarea for input (hidden when content is generated) -->
+                <textarea id="ai-input-text" placeholder="Type your text here..." style="
+                    background: #fff; 
+                    padding: 20px; 
+                    padding-right: 60px; /* Space for send button */
+                    border-radius: 24px; 
+                    color: #333;
+                    line-height: 1.6;
+                    font-family: 'Outfit', sans-serif;
+                    font-size: 16px;
+                    width: 100%;
+                    height: 120px;
+                    border: 1px solid #f0f0f0;
+                    resize: none;
+                    outline: none;
+                    transition: border 0.3s;
+                    box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+                    display: block;
+                "></textarea>
+
+                <!-- Word display area (shown when content is generated) -->
+                <div id="word-display" style="
+                    background: #fff; 
+                    padding: 20px; 
+                    padding-right: 60px;
+                    border-radius: 24px; 
+                    color: #333;
+                    line-height: 1.8;
+                    font-family: 'Outfit', sans-serif;
+                    font-size: 16px;
+                    width: 100%;
+                    min-height: 120px;
+                    border: 1px solid #f0f0f0;
+                    box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+                    display: none;
+                    flex-wrap: wrap;
+                    align-items: center;
+                    gap: 8px;
+                "></div>
+
+                <button id="send-btn" style="
+                    position: absolute;
+                    bottom: 12px;
+                    right: 12px;
+                    width: 44px;
+                    height: 44px;
+                    border-radius: 50%;
+                    border: none;
+                    background: var(--primary-color, #4facfe);
+                    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+                    color: white;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                    box-shadow: 0 4px 12px rgba(79, 172, 254, 0.4);
+                    transition: transform 0.2s, box-shadow 0.2s;
+                " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'"
+                    onclick="this.style.transform='scale(0.95)'">
+                    <i class="material-icons-round" style="font-size: 20px; margin-left: 2px;">send</i>
+                </button>
+            </div>
+
+            <!-- Audio/Control Buttons (Reverted Style) -->
+            <div class="audio-pill">
+                <i class="material-icons-round" style="opacity:0.8; cursor:pointer;" id="prev-btn">skip_previous</i>
+                <i class="material-icons-round" style="font-size:32px; cursor:pointer;"
+                    id="play-input-btn">play_arrow</i>
+                <i class="material-icons-round" style="opacity:0.8; cursor:pointer;" id="next-btn">skip_next</i>
+                <i class="material-icons-round" style="opacity:0.8; cursor:pointer;" id="share-btn">share</i>
+            </div>
+        </div>
+
+        <!-- Premium Glassmorphism Floating Navigation -->
+        <div class="floating-nav-glass-container">
+            <div class="floating-nav-glass">
+                <a href="home.html" class="nav-item">
+                    <i class="material-icons-round">home</i>
+                    <span class="nav-label">Home</span>
+                </a>
+                <a href="page4.html" class="nav-item">
+                    <i class="material-icons-round">auto_awesome</i>
+                    <span class="nav-label">Chatbot</span>
+                </a>
+                <a href="javascript:void(0)" class="nav-item main-action" id="voice-input-btn">
+                    <i class="material-icons-round">mic</i>
+                </a>
+                <a href="page2.html" class="nav-item">
+                    <i class="material-icons-round">camera_alt</i>
+                    <span class="nav-label">Sign to Text</span>
+                </a>
+                <a href="home.html#profile" class="nav-item">
+                    <i class="material-icons-round">person_outline</i>
+                    <span class="nav-label">Profile</span>
+                </a>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="js/app.js"></script>
+
+    <!-- PAGE 3 SPECIFIC LOGIC -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // ============================================================
+            // CONFIGURATION
+            // ============================================================
+            const API_BASE_URL = 'http://localhost:5000';
+
+            // ============================================================
+            // DOM ELEMENTS
+            // ============================================================
+            const sendBtn = document.getElementById('send-btn');
+            const playBtn = document.getElementById('play-input-btn');
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
+            const shareBtn = document.getElementById('share-btn');
+            const speedSlider = document.getElementById('speed-slider');
+            const speedDisplay = document.getElementById('speed-value');
+            const micBtn = document.getElementById('voice-input-btn');
+            const textArea = document.getElementById('ai-input-text');
+            const overlay = document.getElementById('processing-overlay');
+            const videoContainer = document.getElementById('video-container');
+            const videoPlaceholder = document.getElementById('video-placeholder');
+            const aiVideo = document.getElementById('ai-video');
+
+            // ============================================================
+            // VIDEO STATE
+            // ============================================================
+            let VIDEO_PLAYLIST = [];  // Will be populated from API response
+            let currentVideoIndex = 0;
+            let isContentGenerated = false;
+            let isPlaying = false;
+            let translationResult = null;  // Store API response for sharing
+            const wordDisplay = document.getElementById('word-display');
+
+            // ============================================================
+            // HELPER FUNCTIONS
+            // ============================================================
+
+            function displayWords(tokens) {
+                // Hide textarea, show word display
+                textArea.style.display = 'none';
+                wordDisplay.style.display = 'flex';
+
+                // Clear previous content
+                wordDisplay.innerHTML = '';
+
+                // Create a span for each word
+                tokens.forEach((word, index) => {
+                    const wordSpan = document.createElement('span');
+                    wordSpan.textContent = word;
+                    wordSpan.className = 'word-item';
+                    wordSpan.dataset.index = index;
+                    wordSpan.style.cssText = `
+                        display: inline-block;
+                        padding: 4px 6px;
+                        margin: 2px;
+                        border-radius: 6px;
+                        transition: all 0.3s ease;
+                        cursor: pointer;
+                        font-weight: 400;
+                        color: #666;
+                    `;
+
+                    // Click word to jump to that video
+                    wordSpan.addEventListener('click', () => {
+                        loadVideo(index);
+                    });
+
+                    wordDisplay.appendChild(wordSpan);
+                });
+            }
+
+            function highlightWord(index) {
+                // Remove highlight from all words
+                const allWords = wordDisplay.querySelectorAll('.word-item');
+                allWords.forEach(word => {
+                    word.style.color = '#666';
+                    word.style.transform = 'scale(1)';
+                    word.style.fontWeight = '400';
+                    word.style.background = 'transparent';
+                    word.style.borderBottom = 'none';
+                    word.style.boxShadow = 'none';
+                });
+
+                // Highlight current word - minimal style
+                if (allWords[index]) {
+                    allWords[index].style.color = '#4facfe';
+                    allWords[index].style.transform = 'scale(1.1)';
+                    allWords[index].style.fontWeight = '600';
+                    allWords[index].style.borderBottom = '2px solid #4facfe';
+
+                    // Scroll into view if needed
+                    allWords[index].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                }
+            }
+
+            function showError(message) {
+                // Hide overlay if showing
+                overlay.style.display = 'none';
+
+                // Show user-friendly alert
+                alert(`⚠️ ${message}\n\nMake sure the Flask server is running:\npython app.py`);
+            }
+
+            function loadVideo(index) {
+                if (VIDEO_PLAYLIST.length === 0) return;
+
+                // Wrap around for prev/next
+                if (index < 0) index = VIDEO_PLAYLIST.length - 1;
+                if (index >= VIDEO_PLAYLIST.length) index = 0;
+
+                currentVideoIndex = index;
+
+                // Build full URL for video
+                const videoUrl = API_BASE_URL + VIDEO_PLAYLIST[currentVideoIndex];
+                console.log(`Loading video ${index + 1}/${VIDEO_PLAYLIST.length}: ${videoUrl}`);
+
+                aiVideo.src = videoUrl;
+                aiVideo.load();
+
+                // Highlight current word
+                highlightWord(currentVideoIndex);
+
+                // Auto-play if in generated mode
+                if (isContentGenerated) {
+                    playVideo();
+                }
+            }
+
+            function playVideo() {
+                aiVideo.play().then(() => {
+                    playBtn.innerText = 'pause';
+                    isPlaying = true;
+                }).catch(e => {
+                    console.log('Playback error:', e);
+                    // Try unmuting and playing again (browser autoplay policy)
+                    aiVideo.muted = true;
+                    aiVideo.play().then(() => {
+                        playBtn.innerText = 'pause';
+                        isPlaying = true;
+                    }).catch(e2 => console.error('Still cannot play:', e2));
+                });
+            }
+
+            function pauseVideo() {
+                aiVideo.pause();
+                playBtn.innerText = 'play_arrow';
+                isPlaying = false;
+            }
+
+            function togglePlayPause() {
+                // If not generated yet, trigger generation
+                if (!isContentGenerated) {
+                    if (textArea.value.trim()) {
+                        startGeneration();
+                    } else {
+                        alert('Please enter text first.');
+                    }
+                    return;
+                }
+
+                // Toggle play/pause
+                if (aiVideo.paused) {
+                    playVideo();
+                } else {
+                    pauseVideo();
+                }
+            }
+
+            // ============================================================
+            // MAIN GENERATION FUNCTION - CALLS FLASK API
+            // ============================================================
+
+            async function startGeneration() {
+                const text = textArea.value.trim();
+
+                if (!text) {
+                    alert('Please type some text first!');
+                    return;
+                }
+
+                // Show Processing Dialog
+                overlay.style.display = 'flex';
+
+                // Hide current video
+                aiVideo.style.display = 'none';
+                videoPlaceholder.style.display = 'flex';
+                pauseVideo();
+
+                try {
+                    console.log(`📤 Sending to API: "${text}"`);
+
+                    // Call Flask API
+                    const response = await fetch(`${API_BASE_URL}/api/translate`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ text: text })
+                    });
+
+                    // Parse response
+                    const data = await response.json();
+                    console.log('📥 API Response:', data);
+
+                    // Hide overlay
+                    overlay.style.display = 'none';
+
+                    // Check for errors
+                    if (!data.success) {
+                        showError(data.error || 'Translation failed');
+                        return;
+                    }
+
+                    // Check if we got any videos
+                    if (!data.video_urls || data.video_urls.length === 0) {
+                        showError('No matching signs found for your text. Try different words.');
+                        return;
+                    }
+
+                    // Store result and update playlist
+                    translationResult = data;
+                    VIDEO_PLAYLIST = data.video_urls;
+                    currentVideoIndex = 0;
+                    isContentGenerated = true;
+
+                    console.log(`✅ Got ${VIDEO_PLAYLIST.length} videos:`, data.selected_tokens);
+
+                    // Show suggestions if any
+                    if (data.suggestions && data.suggestions.trim()) {
+                        console.log('💡 Suggestions:', data.suggestions);
+                    }
+
+                    // Show video player, hide placeholder
+                    videoPlaceholder.style.display = 'none';
+                    aiVideo.style.display = 'block';
+
+                    // Display words with highlighting support
+                    displayWords(data.selected_tokens);
+
+                    // Load and play first video
+                    loadVideo(0);
+
+                } catch (error) {
+                    console.error('❌ API Error:', error);
+                    overlay.style.display = 'none';
+
+                    if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+                        showError('Cannot connect to server. Please make sure the Flask server is running on port 5000.');
+                    } else {
+                        showError(`Error: ${error.message}`);
+                    }
+                }
+            }
+
+            // ============================================================
+            // EVENT LISTENERS
+            // ============================================================
+
+            // Send Button
+            sendBtn.addEventListener('click', startGeneration);
+
+            // Play Button
+            playBtn.addEventListener('click', togglePlayPause);
+
+            // Video Events
+            aiVideo.addEventListener('play', () => {
+                playBtn.innerText = 'pause';
+                isPlaying = true;
+            });
+
+            aiVideo.addEventListener('pause', () => {
+                playBtn.innerText = 'play_arrow';
+                isPlaying = false;
+            });
+
+            aiVideo.addEventListener('error', (e) => {
+                const err = aiVideo.error;
+                console.error("Video Error:", err);
+                if (err && err.code === 4) {
+                    showError('Video file not found. The sign may not be available.');
+                }
+            });
+
+            // Speed Controller
+            speedSlider.addEventListener('input', (e) => {
+                const speed = parseFloat(e.target.value);
+                aiVideo.playbackRate = speed;
+                speedDisplay.innerText = `${speed}x`;
+            });
+
+            // Previous Button
+            prevBtn.addEventListener('click', () => {
+                if (!isContentGenerated || VIDEO_PLAYLIST.length === 0) return;
+                loadVideo(currentVideoIndex - 1);
+
+                // Visual feedback
+                prevBtn.style.color = 'var(--primary-color)';
+                setTimeout(() => prevBtn.style.color = '', 300);
+            });
+
+            // Next Button
+            nextBtn.addEventListener('click', () => {
+                if (!isContentGenerated || VIDEO_PLAYLIST.length === 0) return;
+                loadVideo(currentVideoIndex + 1);
+
+                // Visual feedback
+                nextBtn.style.color = 'var(--primary-color)';
+                setTimeout(() => nextBtn.style.color = '', 300);
+            });
+
+            // Auto-play next video when current ends
+            aiVideo.addEventListener('ended', () => {
+                if (currentVideoIndex < VIDEO_PLAYLIST.length - 1) {
+                    // Play next video in sequence
+                    loadVideo(currentVideoIndex + 1);
+                } else {
+                    // End of playlist - reset to beginning but don't auto-play
+                    playBtn.innerText = 'play_arrow';
+                    isPlaying = false;
+                    console.log('✅ Finished playing all signs');
+                }
+            });
+
+            // Share Button
+            shareBtn.addEventListener('click', () => {
+                const text = textArea.value;
+                const shareText = translationResult
+                    ? `"${text}" in Sign Language: ${translationResult.selected_tokens.join(' → ')}`
+                    : text || 'Check out this translation!';
+
+                if (navigator.share) {
+                    navigator.share({
+                        title: 'Smart Language Translator - Sign Language',
+                        text: shareText,
+                        url: window.location.href
+                    }).then(() => console.log('Shared successfully'))
+                        .catch((error) => console.log('Share error:', error));
+                } else {
+                    navigator.clipboard.writeText(shareText + " - Shared via Smart Translator");
+                    alert('Copied to clipboard!');
+                }
+            });
+
+            // Mic Button (Speech to Text)
+            micBtn.addEventListener('click', () => {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+                if (SpeechRecognition) {
+                    const recognition = new SpeechRecognition();
+                    recognition.lang = 'en-US';
+
+                    // Visual feedback
+                    micBtn.style.transform = 'scale(1.2)';
+                    micBtn.style.boxShadow = '0 0 15px var(--primary-color)';
+                    textArea.placeholder = "Listening...";
+
+                    recognition.start();
+
+                    recognition.onresult = (event) => {
+                        const transcript = event.results[0][0].transcript;
+                        textArea.value = transcript;
+                        textArea.placeholder = "Type your text here...";
+                        micBtn.style.transform = '';
+                        micBtn.style.boxShadow = '';
+                    };
+
+                    recognition.onerror = (event) => {
+                        console.error('Voice error', event.error);
+                        alert('Voice input failed. Please try again.');
+                        micBtn.style.transform = '';
+                        micBtn.style.boxShadow = '';
+                        textArea.placeholder = "Type your text here...";
+                    };
+
+                    recognition.onend = () => {
+                        micBtn.style.transform = '';
+                        micBtn.style.boxShadow = '';
+                        textArea.placeholder = "Type your text here...";
+                    };
+
+                } else {
+                    alert('Speech Recognition is not supported in this browser.');
+                }
+            });
+
+            // Textarea focus styling
+            textArea.addEventListener('focus', () => {
+                textArea.style.border = '1px solid var(--primary-color)';
+            });
+            textArea.addEventListener('blur', () => {
+                textArea.style.border = '1px solid #f0f0f0';
+            });
+
+            // ============================================================
+            // KEYBOARD SHORTCUTS
+            // ============================================================
+            document.addEventListener('keydown', (e) => {
+                // Enter key in textarea triggers send
+                if (e.key === 'Enter' && !e.shiftKey && document.activeElement === textArea) {
+                    e.preventDefault();
+                    startGeneration();
+                }
+
+                // Spacebar toggles play/pause when not in textarea
+                if (e.key === ' ' && document.activeElement !== textArea && isContentGenerated) {
+                    e.preventDefault();
+                    togglePlayPause();
+                }
+
+                // Arrow keys for prev/next when not in textarea
+                if (document.activeElement !== textArea && isContentGenerated) {
+                    if (e.key === 'ArrowLeft') {
+                        loadVideo(currentVideoIndex - 1);
+                    } else if (e.key === 'ArrowRight') {
+                        loadVideo(currentVideoIndex + 1);
+                    }
+                }
+            });
+
+            console.log('🎬 Text-to-Sign page loaded. Server expected at:', API_BASE_URL);
+        });
+    </script>
+</body>
+
+</html>

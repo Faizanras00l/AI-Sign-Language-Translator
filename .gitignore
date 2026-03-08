@@ -1,0 +1,7 @@
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+.env
+text_to_sign/WLASL_Processed_Videos/_web_cache/
